@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة معزوفة المطر على نوافذ الشناشيل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b131d;
+            color: #f4e8c1;
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 10px;
+        }
+
+        .lightning-flash { animation: flash 0.4s ease-out; }
+        @keyframes flash {
+            0% { opacity: 1; background: #ffffff; }
+            50% { opacity: 0.8; background: #cce7ff; }
+            100% { opacity: 1; }
+        }
+
+        .room-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(10, 15, 25, 0.75), rgba(5, 8, 12, 0.92)), 
+                        url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+            z-index: 1; transition: all 0.8s ease;
+        }
+
+        /* Top Game Bar - Responsive */
+        .game-bar {
+            position: relative; 
+            width: 100%; 
+            max-width: 680px;
+            background: rgba(20, 12, 6, 0.88); 
+            border: 2px solid #d4af37;
+            border-radius: 20px; 
+            padding: 8px 16px; 
+            z-index: 10;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6); 
+            backdrop-filter: blur(8px);
+            margin-bottom: 10px;
+        }
+
+        .player-info { font-weight: 700; color: #d4af37; font-size: 0.88rem; }
+        .score-badge { background: #8b5a2b; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+
+        /* Shanasheel Window Container */
+        .shanasheel-window {
+            position: relative; 
+            z-index: 3; 
+            width: 100%; 
+            max-width: 680px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            background: rgba(45, 27, 14, 0.92); 
+            border: 8px solid #1a0f08;
+            border-radius: 15px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            padding: 15px; 
+            text-align: center; 
+            backdrop-filter: blur(5px);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .window-frame {
+            border: 2px dashed #8b5a2b; 
+            padding: 15px 12px; 
+            border-radius: 8px;
+            background: rgba(15, 10, 5, 0.4);
+        }
+
+        h1 { font-family: 'Amiri', serif; font-size: 1.8rem; color: #d4af37; margin-bottom: 4px; }
+        p.subtitle { font-size: 0.8rem; color: #dcd6c5; margin-bottom: 12px; }
+
+        .controls {
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.35); 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-bottom: 10px;
+        }
+
+        .control-group { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #e6c875; }
+        input[type="range"] { width: 55%; accent-color: #d4af37; cursor: pointer; height: 6px; }
+
+        /* Add Poetry Form */
+        .add-poetry-box {
+            background: rgba(0, 0, 0, 0.4); 
+            padding: 10px; 
+            border-radius: 8px;
+            margin-bottom: 10px; 
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .add-poetry-box h3 { font-size: 0.85rem; color: #d4af37; margin-bottom: 6px; }
+
+        .input-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+
+        .input-style {
+            width: 100%; 
+            padding: 8px 10px; 
+            border-radius: 5px;
+            border: 1px solid #8b5a2b; 
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff; 
+            font-family: 'Cairo', sans-serif; 
+            font-size: 0.8rem; 
+            outline: none;
+        }
+
+        .actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
+
+        button {
+            font-family: 'Cairo', sans-serif; 
+            background: #8b5a2b; 
+            color: #fff;
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            cursor: pointer;
+            font-size: 0.78rem; 
+            font-weight: 600; 
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            flex: 1 1 calc(50% - 6px);
+            max-width: 220px;
+        }
+
+        button:active { transform: scale(0.97); }
+        button:hover { background: #a46d34; }
+        button.btn-special { background: #d4af37; color: #1a0f08; }
+        button.btn-audio { background: #2e7d32; }
+
+        .thought-box {
+            font-family: 'Amiri', serif; 
+            font-size: 1.05rem; 
+            color: #ffeaa7;
+            min-height: 42px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background: rgba(0,0,0,0.3); 
+            border-radius: 6px; 
+            padding: 8px 12px;
+            word-break: break-word;
+        }
+
+        .raindrop {
+            position: absolute; 
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.7));
+            width: 1px; 
+            height: 25px; 
+            z-index: 2; 
+            opacity: 0.7; 
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall { 0% { transform: translateY(-30px); } 100% { transform: translateY(105vh); } }
+
+        /* Media Queries for Tablet and PC Screens */
+        @media (min-width: 600px) {
+            .shanasheel-window { border-width: 12px; padding: 20px; }
+            .window-frame { padding: 22px 18px; }
+            h1 { font-size: 2.2rem; }
+            p.subtitle { font-size: 0.9rem; }
+            .input-row { flex-direction: row; }
+            button { flex: 0 0 auto; font-size: 0.82rem; padding: 8px 14px; }
+            .player-info { font-size: 1rem; }
+            .score-badge { font-size: 0.85rem; }
+            .thought-box { font-size: 1.2rem; min-height: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Game Bar -->
+    <div class="game-bar">
+        <div class="player-info" id="playerRank">🏆 الرتبة: عابر سبيل</div>
+        <div class="score-badge" id="playerXP">النقاط: 0 XP</div>
+    </div>
+
+    <div class="room-bg" id="roomBg"></div>
+
+    <div class="shanasheel-window" id="windowFrame">
+        <div class="window-frame">
+            <h1>شناشيل البصرة</h1>
+            <p class="subtitle">استمعي لصوت المطر الهادئ واجمعي النقاط لإضافة أبياتكِ الشعرية الخاصّة!</p>
+
+            <!-- Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label for="rainSpeed">شدة المطر:</label>
+                    <input type="range" id="rainSpeed" min="1" max="10" value="5">
+                </div>
+                <div class="control-group">
+                    <label for="roomBrightness">إضاءة الغرفة:</label>
+                    <input type="range" id="roomBrightness" min="20" max="100" value="40">
+                </div>
+            </div>
+
+            <!-- Audio & Interactive Buttons -->
+            <div class="actions">
+                <button id="audioToggleBtn" class="btn-audio">🔊 تشغيل صوت المطر</button>
+                <button id="poetryBtn">📜 استعراض بيت شعري (+10 XP)</button>
+                <button id="amberBtn">💡 إضاءة الفانوس (+5 XP)</button>
+                <button id="stormBtn" class="btn-special">⚡ عاصفة رعدية (+15 XP)</button>
+                <button id="themeBtn">🌆 أوقات اليوم</button>
+            </div>
+
+            <!-- Custom Poetry Input Box -->
+            <div class="add-poetry-box">
+                <h3>✍️ اضيفي بيتكِ الشعري الخاص للمجموعة:</h3>
+                <div class="input-row">
+                    <input type="text" id="customPoetryText" class="input-style" placeholder="اكتبي البيت الشعري هنا...">
+                    <input type="text" id="customPoetryAuthor" class="input-style" placeholder="اسم الشاعر (اختياري)">
+                </div>
+                <button id="addPoetryBtn" class="btn-special" style="width: 100%; max-width: none; margin-top: 4px;">➕ إضافة للمجموعة (+25 XP)</button>
+            </div>
+
+            <!-- Display Box -->
+            <div class="thought-box" id="thoughtDisplay">
+                "مطر... مطر... في الشناشيل العتيقة يحلو السهر."
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Assets -->
+    <audio id="rainAudio" loop preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/1250/1250-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="thunderAudio" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/1271/1271-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // 1. Web Audio Manager
+        const rainAudio = document.getElementById('rainAudio');
+        const thunderAudio = document.getElementById('thunderAudio');
+        const audioToggleBtn = document.getElementById('audioToggleBtn');
+        let isPlayingAudio = false;
+
+        audioToggleBtn.addEventListener('click', () => {
+            if (!isPlayingAudio) {
+                rainAudio.volume = 0.5;
+                rainAudio.play().then(() => {
+                    isPlayingAudio = true;
+                    audioToggleBtn.textContent = "🔇 إيقاف صوت المطر";
+                    audioToggleBtn.style.background = "#c62828";
+                }).catch(() => {
+                    alert("اضغطي مرة أخرى لتفعيل الصوت!");
+                });
+            } else {
+                rainAudio.pause();
+                isPlayingAudio = false;
+                audioToggleBtn.textContent = "🔊 تشغيل صوت المطر";
+                audioToggleBtn.style.background = "#2e7d32";
+            }
+        });
+
+        // 2. XP & Rank Gamification System
+        let xp = 0;
+        const playerXP = document.getElementById('playerXP');
+        const playerRank = document.getElementById('playerRank');
+
+        function addXP(amount) {
+            xp += amount;
+            playerXP.textContent = `النقاط: ${xp} XP`;
+            updateRank();
+        }
+
+        function updateRank() {
+            if (xp >= 100) {
+                playerRank.textContent = "🏆 الرتبة: سيد المطر 🌧️";
+            } else if (xp >= 50) {
+                playerRank.textContent = "🏆 الرتبة: شاعر الشناشيل 📜";
+            } else if (xp >= 20) {
+                playerRank.textContent = "🏆 الرتبة: عاشق الهدوء ☕";
+            }
+        }
+
+        // 3. Poetry List
+        let poetryList = [
+            { text: "مطر... مطر... في الشناشيل العتيقة يحلو السهر.", author: "بدر شاكر السياب" },
+            { text: "تمر الساعات هادئة كأنها عطور بصرية على نافذة قديمة.", author: "حنين البصرة" },
+            { text: "سلامٌ على البصرة ومطرها، وحنين البيوت المشرعة على النخيل.", author: "أدب عراقي" },
+            { text: "سقى الغيم طيفاً في حشا القلب طافياً، كأنه نغمُ عودٍ في ليل الشتاء.", author: "موشح قديم" }
+        ];
+
+        // 4. Custom Poetry Handler
+        const customPoetryText = document.getElementById('customPoetryText');
+        const customPoetryAuthor = document.getElementById('customPoetryAuthor');
+        const addPoetryBtn = document.getElementById('addPoetryBtn');
+        const thoughtDisplay = document.getElementById('thoughtDisplay');
+
+        addPoetryBtn.addEventListener('click', () => {
+            const poem = customPoetryText.value.trim();
+            const author = customPoetryAuthor.value.trim() || "شعر خاص";
+
+            if (poem !== "") {
+                poetryList.push({ text: poem, author: author });
+                thoughtDisplay.style.opacity = 0;
+                setTimeout(() => {
+                    thoughtDisplay.textContent = `"${poem}" — [${author}]`;
+                    thoughtDisplay.style.opacity = 1;
+                }, 200);
+
+                customPoetryText.value = "";
+                customPoetryAuthor.value = "";
+                addXP(25);
+                alert("تمت إضافة بيتكِ الشعري بنجاح! 🎉");
+            } else {
+                alert("الرجاء كتابة البيت الشعري أولاً!");
+            }
+        });
+
+        // 5. Poetry Viewer
+        document.getElementById('poetryBtn').addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * poetryList.length);
+            const selectedPoem = poetryList[randomIndex];
+            
+            thoughtDisplay.style.opacity = 0;
+            setTimeout(() => {
+                thoughtDisplay.textContent = `"${selectedPoem.text}" — [${selectedPoem.author}]`;
+                thoughtDisplay.style.opacity = 1;
+            }, 200);
+
+            addXP(10);
+        });
+
+        thoughtDisplay.style.transition = 'opacity 0.3s ease';
+
+        // 6. Mobile-optimized Rain Simulator
+        const isMobile = window.innerWidth < 600;
+        let raindropCount = isMobile ? 40 : 70;
+        const body = document.body;
+
+        function createRain() {
+            document.querySelectorAll('.raindrop').forEach(e => e.remove());
+            for (let i = 0; i < raindropCount; i++) {
+                const drop = document.createElement('div');
+                drop.classList.add('raindrop');
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.animationDuration = (Math.random() * 0.4 + 0.4) + 's';
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                body.appendChild(drop);
+            }
+        }
+        createRain();
+
+        document.getElementById('rainSpeed').addEventListener('input', (e) => {
+            const multiplier = isMobile ? 8 : 15;
+            raindropCount = e.target.value * multiplier;
+            createRain();
+        });
+
+        document.getElementById('roomBrightness').addEventListener('input', (e) => {
+            document.getElementById('roomBg').style.opacity = (e.target.value / 100) + 0.2;
+        });
+
+        // 7. Amber Lamp Toggle
+        let isAmber = false;
+        document.getElementById('amberBtn').addEventListener('click', () => {
+            isAmber = !isAmber;
+            const windowFrame = document.getElementById('windowFrame');
+            if (isAmber) {
+                windowFrame.style.boxShadow = '0 20px 50px rgba(212, 175, 55, 0.5), inset 0 0 35px rgba(212, 175, 55, 0.3)';
+            } else {
+                windowFrame.style.boxShadow = '0 20px 50px rgba(0,0,0,0.8)';
+            }
+            addXP(5);
+        });
+
+        // 8. Thunder Storm Toggle
+        document.getElementById('stormBtn').addEventListener('click', () => {
+            body.classList.add('lightning-flash');
+            raindropCount = isMobile ? 80 : 150;
+            createRain();
+            
+            thunderAudio.currentTime = 0;
+            thunderAudio.volume = 0.8;
+            thunderAudio.play().catch(() => {});
+
+            setTimeout(() => body.classList.remove('lightning-flash'), 400);
+            addXP(15);
+        });
+
+        // 9. Time of Day Toggle
+        let themeState = 0;
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            themeState = (themeState + 1) % 3;
+            const roomBg = document.getElementById('roomBg');
+            if(themeState === 0) roomBg.style.filter = 'none';
+            else if(themeState === 1) roomBg.style.filter = 'sepia(0.6) hue-rotate(-30deg)';
+            else if(themeState === 2) roomBg.style.filter = 'hue-rotate(140deg)';
+        });
+    </script>
+</body>
+</html>
